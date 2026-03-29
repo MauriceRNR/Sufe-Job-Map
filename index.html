@@ -2,18 +2,46 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>上海财经大学基层就业地图</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #ffffff; font-family: 'SimHei', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        .main-header { width: 100%; padding: 30px 0 10px; text-align: center; flex-shrink: 0; }
-        .main-header h1 { color: #000; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px; }
-        .map-container { flex-grow: 1; position: relative; width: 100%; background: #ffffff; }
+        html, body { height: 100%; width: 100%; overflow: hidden; background: #ffffff; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: flex; flex-direction: column; }
+        
+        /* 标题适配：手机端缩小字号 */
+        .main-header { width: 100%; padding: 15px 0; text-align: center; flex-shrink: 0; border-bottom: 1px solid #f0f0f0; }
+        .main-header h1 { color: #000; font-size: 1.5rem; font-weight: bold; }
+
+        .map-container { flex-grow: 1; position: relative; width: 100%; overflow: hidden; }
         #china-map { width: 100%; height: 100%; }
-        .logo-bar { position: absolute; top: 10px; left: 30px; z-index: 10; }
-        .logo-bar img { height: 80px; width: auto; }
-        .info-card { position: absolute; bottom: 40px; left: 40px; z-index: 10; background: #fff; border: 1.5px solid #000; padding: 25px; min-width: 300px; box-shadow: 6px 6px 0 rgba(0,0,0,0.1); }
-        .region-name { font-size: 2rem; font-weight: bold; color: #d6292b; margin-bottom: 12px; }
+
+        /* Logo 适配：手机端调小 */
+        .logo-bar { position: absolute; top: 10px; left: 15px; z-index: 10; pointer-events: none; }
+        .logo-bar img { height: 40px; width: auto; opacity: 0.9; }
+
+        /* 信息卡片适配：手机端改为底部横条或浮窗 */
+        .info-card { 
+            position: absolute; 
+            bottom: 15px; 
+            left: 10px; 
+            right: 10px; 
+            z-index: 10; 
+            background: rgba(255,255,255,0.95); 
+            border: 1px solid #000; 
+            padding: 15px; 
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            pointer-events: none;
+        }
+        .region-name { font-size: 1.4rem; font-weight: bold; color: #d6292b; margin-bottom: 5px; }
+        #regionData { font-size: 0.9rem; line-height: 1.4; color: #333; }
+
+        @media (min-width: 768px) {
+            .main-header h1 { font-size: 2.5rem; }
+            .info-card { width: 300px; right: auto; bottom: 40px; left: 40px; }
+            .logo-bar img { height: 70px; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/china.js"></script>
@@ -21,47 +49,40 @@
 <body>
 
 <div class="main-header">
-    <h1>上海财经大学基层就业地图</h1>
+    <h1>上财基层就业地图</h1>
 </div>
 
 <div class="map-container">
     <div id="china-map"></div>
     <div class="logo-bar">
-        <img src="SufeLogo.png" alt="Logo" onerror="this.style.opacity='0'">
+        <img src="SufeLogo.png" alt="Logo" onerror="this.style.display='none'">
     </div>
     <div class="info-card">
-        <div style="font-size:0.9rem; color:#666; margin-bottom:5px;">当前选中省份</div>
-        <div class="region-name" id="selectedRegion">请点击地图</div>
-        <div id="regionData" style="font-size:1.1rem; line-height:1.6; color:#333;"></div>
-        <div style="font-size:0.8rem; color:#999; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">点击省份查看具体就业政策导向</div>
+        <div class="region-name" id="selectedRegion">点击地图省份</div>
+        <div id="regionData">查看各地基层就业政策详情</div>
     </div>
 </div>
 
 <script>
     (function() {
-        // 数据接口：你可以在这里扩充数据
         const dataList = [
-            { name: '上海', policy: '“三支一扶”计划 / 基层安家补贴', info: '重点支持选调生及各区基层服务岗位。' },
-            { name: '北京', policy: '选调生计划 / 基层名额专项', info: '面向优秀毕业生提供基层锻炼机会。' },
-            { name: '新疆', policy: '大学生志愿服务西部计划', info: '国家战略支持，提供完善的待遇与考核加分政策。' },
-            { name: '西藏', policy: '专装进藏 / 西部计划', info: '艰苦地区奋斗奖励及定向考录政策。' },
-            { name: '广东', policy: '“希望乡村”计划 / 粤东西北基层', info: '珠三角人才向基层流动专项扶持。' }
+            { name: '上海', policy: '“三支一扶” / 基层补贴', info: '重点支持选调生岗位。' },
+            { name: '新疆', policy: '西部计划', info: '待遇保障完善，战略支持。' }
+            // 可继续添加...
         ];
 
         const chart = echarts.init(document.getElementById('china-map'));
 
         const option = {
-            backgroundColor: '#ffffff',
             tooltip: { trigger: 'item', formatter: '{b}' },
             series: [{
-                name: '就业地图',
                 type: 'map',
-                map: 'china', // 使用内置的 china 地图
-                roam: true,
+                map: 'china',
+                roam: true, // 开启缩放和平移
                 zoom: 1.2,
-                label: { show: true, fontSize: 13, color: '#444' },
-                itemStyle: { areaColor: '#f7f7f7', borderColor: '#888', borderWidth: 0.8 },
-                emphasis: { label: { show: true, fontSize: 15, fontWeight: 'bold' }, itemStyle: { areaColor: '#fdecec', borderColor: '#d6292b', borderWidth: 1.5 } },
+                label: { show: true, fontSize: 10 },
+                itemStyle: { areaColor: '#f7f7f7', borderColor: '#ccc' },
+                emphasis: { itemStyle: { areaColor: '#fdecec' } },
                 select: { itemStyle: { areaColor: '#d6292b' }, label: { color: '#fff' } },
                 data: dataList
             }]
@@ -69,14 +90,16 @@
 
         chart.setOption(option);
 
+        // 处理点击事件
         chart.on('click', function(params) {
             document.getElementById('selectedRegion').innerText = params.name;
             const match = dataList.find(d => d.name === params.name);
             document.getElementById('regionData').innerHTML = match ? 
                 `<strong>政策：</strong>${match.policy}<br><strong>详情：</strong>${match.info}` : 
-                `<span style="color:#999;">该地区导向数据正在更新中...</span>`;
+                "数据更新中...";
         });
 
+        // 窗口尺寸改变时重绘
         window.addEventListener('resize', () => chart.resize());
     })();
 </script>
