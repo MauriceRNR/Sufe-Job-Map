@@ -2,281 +2,104 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>上海财经大学基层就业导向图</title>
+    <title>上海财经大学基层就业地图</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #ffffff;
-            font-family: 'Helvetica Neue', Helvetica, Arial, 'Microsoft Yahei', 'SimHei', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            color: #333333;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 顶部大标题 */
-        .main-header {
-            width: 100%;
-            padding: 30px 0 15px 0;
-            text-align: center;
-            background: #ffffff;
-            flex-shrink: 0;
-        }
-        .main-header h1 {
-            font-family: 'SimHei', sans-serif;
-            color: #000000;
-            font-size: 3rem; /* 进一步加大字号 */
-            font-weight: bold;
-            letter-spacing: 4px;
-        }
-
-        /* 主容器 */
-        .map-container {
-            flex-grow: 1;
-            position: relative;
-            width: 100%;
-            background: #ffffff;
-        }
-
-        #china-map {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* 改进：左上角本地 Logo 适配 */
-        .logo-bar {
-            position: absolute;
-            top: 10px;
-            left: 30px;
-            z-index: 10;
-        }
-        .logo-bar img {
-            display: block;
-            height: 80px; /* 适当增大 Logo 尺寸 */
-            width: auto;
-        }
-
-        /* 选中区域信息卡片 */
-        .info-card {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            z-index: 10;
-            background: #ffffff;
-            border-radius: 4px;
-            padding: 20px 30px;
-            min-width: 280px;
-            border: 1px solid #000000; /* 强化边框，更清晰 */
-            box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
-            pointer-events: none;
-        }
-        .info-card .label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        .info-card .region-name {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #d6292b; /* SUFE Red */
-            margin-bottom: 10px;
-        }
-        .info-card .data-item {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: #333;
-        }
-        .info-card .hint {
-            font-size: 0.8rem;
-            margin-top: 15px;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-            font-style: italic;
-        }
-
-        /* 右下角备注 */
-        .corner-note {
-            position: absolute;
-            bottom: 20px;
-            right: 30px;
-            z-index: 10;
-            font-size: 0.8rem;
-            color: #999;
-        }
-
-        /* 加载指示器 */
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 20;
-            flex-direction: column;
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #d6292b;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #ffffff; font-family: 'SimHei', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        .main-header { width: 100%; padding: 25px 0; text-align: center; flex-shrink: 0; }
+        .main-header h1 { color: #000; font-size: 2.5rem; font-weight: bold; }
+        .map-container { flex-grow: 1; position: relative; width: 100%; }
+        #china-map { width: 100%; height: 100%; }
+        .logo-bar { position: absolute; top: 10px; left: 30px; z-index: 10; }
+        .logo-bar img { height: 70px; width: auto; }
+        .info-card { position: absolute; bottom: 40px; left: 40px; z-index: 10; background: #fff; border: 1.5px solid #000; padding: 20px; min-width: 260px; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); }
+        .region-name { font-size: 1.8rem; font-weight: bold; color: #d6292b; margin-bottom: 10px; }
+        #loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; justify-content: center; align-items: center; z-index: 20; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
 
 <div class="main-header">
-    <h1>上海财经大学基层就业地图</h1>
+    <h1>上海财经大学基层就业导向图</h1>
 </div>
 
 <div class="map-container">
     <div id="china-map"></div>
-
     <div class="logo-bar">
-        <img src="Yufeng.png" alt="SUFE Logo" onerror="this.style.display='none'; console.warn('未找到本地图片 SufeLogo.png')">
+        <img src="SufeLogo.png" alt="Logo" onerror="this.style.opacity='0'">
     </div>
-
-    <div class="info-card" id="regionInfo">
-        <div class="label">区域详情</div>
-        <div class="region-name" id="selectedRegion">请选择省份</div>
-        <div id="regionData" class="data-item">
-            </div>
-        <div class="hint">点击省份切换查看各地区基层就业政策与导向</div>
+    <div class="info-card">
+        <div style="font-size:0.9rem; color:#666;">区域详情</div>
+        <div class="region-name" id="selectedRegion">请点击省份</div>
+        <div id="regionData" style="font-size:1rem; line-height:1.5;"></div>
     </div>
-
-    <div class="corner-note">
-        数据来源：上海财经大学学生职业发展指导中心
-    </div>
-
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p style="margin-top:20px; color:#666;">系统初始化中...</p>
+    <div id="loadingOverlay">
+        <div id="statusText">正在加载地图数据...</div>
     </div>
 </div>
 
 <script>
     (function() {
-        // 数据接口预留：在此处修改或添加各省的具体指标数据
         const dataList = [
-            { name: '上海', value: 100, info: '基层就业重点支持对象，提供专项安家补贴。', policy: '“三支一扶”计划重点城市' },
-            { name: '广东', value: 85, info: '粤港澳大湾区人才储备计划，基层岗位丰富。', policy: '山区计划 / 志愿者服务' },
-            { name: '四川', value: 70, info: '中西部基层岗位导向省份，选调生名额充足。', policy: '定向选调生专项计划' },
-            { name: '新疆', value: 95, info: '战略性基层就业地区，提供全方位待遇保障。', policy: '西部计划重点支持' },
-            // ... 你可以在此继续添加其他省份数据
+            { name: '上海', policy: '“三支一扶”专项补贴', info: '重点支持基层公共服务岗位。' },
+            { name: '新疆', policy: '西部计划重点支持', info: '提供全方位待遇保障与落户政策。' }
         ];
 
-        const GEOJSON_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
-        let myChart = null;
-        const regionNameSpan = document.getElementById('selectedRegion');
-        const regionDataDiv = document.getElementById('regionData');
+        // 备用多个数据源，防止单个失效
+        const GEO_SOURCES = [
+            'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+            'https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples/data/asset/geo/china.json'
+        ];
 
-        function initChart() {
-            myChart = echarts.init(document.getElementById('china-map'));
+        async function init() {
+            const chart = echarts.init(document.getElementById('china-map'));
+            const status = document.getElementById('statusText');
             
-            const option = {
-                backgroundColor: '#ffffff',
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}'
-                },
+            let geoData = null;
+            // 循环尝试数据源
+            for (let url of GEO_SOURCES) {
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        geoData = await res.json();
+                        break; 
+                    }
+                } catch (e) { console.warn("尝试源失败:", url); }
+            }
+
+            if (!geoData) {
+                status.innerHTML = "<b style='color:red'>数据请求被浏览器拦截</b><br>请尝试更换浏览器或检查网络";
+                return;
+            }
+
+            echarts.registerMap('china', geoData);
+            document.getElementById('loadingOverlay').style.display = 'none';
+
+            chart.setOption({
                 series: [{
-                    name: '就业地图',
                     type: 'map',
-                    map: 'china_registered',
+                    map: 'china',
                     roam: true,
-                    // 优化：增大初始缩放比例
-                    zoom: 1.25, 
-                    center: [104.3, 37.5],
-                    
-                    // 优化：省份标签
-                    label: {
-                        show: true,
-                        fontSize: 14,       // 增大字体
-                        color: '#333',
-                        fontWeight: '500',
-                        // 解决文字重叠的核心配置
-                        hideOverlap: true,  
-                        formatter: function(params) {
-                            // 只有在地图放大到一定程度或特定省份显示完整名称
-                            return params.name;
-                        }
-                    },
-
-                    // 优化：基础样式
-                    itemStyle: {
-                        areaColor: '#f9f9f9',
-                        borderColor: '#999',
-                        borderWidth: 1,      // 加粗边界线
-                    },
-
-                    // 悬浮高亮
-                    emphasis: {
-                        label: { show: true, fontSize: 16, color: '#000', fontWeight: 'bold' },
-                        itemStyle: { areaColor: '#fdecec', borderColor: '#d6292b', borderWidth: 2 }
-                    },
-
-                    // 选中样式
-                    select: {
-                        itemStyle: { areaColor: '#d6292b' },
-                        label: { color: '#ffffff' }
-                    },
-
-                    data: dataList // 绑定数据接口
+                    zoom: 1.2,
+                    label: { show: true, fontSize: 12 },
+                    itemStyle: { areaColor: '#f4f4f4', borderColor: '#999' },
+                    emphasis: { itemStyle: { areaColor: '#fdecec' } },
+                    select: { itemStyle: { areaColor: '#d6292b' }, label: { color: '#fff' } },
+                    data: dataList
                 }]
-            };
+            });
 
-            myChart.setOption(option);
-
-            // 交互逻辑：点击省份后根据 dataList 渲染左下角
-            myChart.on('click', function(params) {
-                const regionName = params.name;
-                const regionInfo = dataList.find(item => item.name === regionName);
-
-                regionNameSpan.innerHTML = regionName;
-                
-                if (regionInfo) {
-                    // 如果有数据，显示差异化重编的内容
-                    regionDataDiv.innerHTML = `
-                        <div style="margin-bottom:8px;"><strong>政策导向：</strong>${regionInfo.policy}</div>
-                        <div><strong>具体详情：</strong>${regionInfo.info}</div>
-                    `;
-                } else {
-                    // 如果没数据，显示默认空白提示
-                    regionDataDiv.innerHTML = `<span style="color:#999;">暂无该地区详细导向数据</span>`;
-                }
+            chart.on('click', (params) => {
+                document.getElementById('selectedRegion').innerText = params.name;
+                const item = dataList.find(d => d.name === params.name);
+                document.getElementById('regionData').innerHTML = item ? 
+                    `<b>政策：</b>${item.policy}<br><b>详情：</b>${item.info}` : 
+                    "暂无该地区详细导向数据";
             });
         }
 
-        async function loadMap() {
-            try {
-                const response = await fetch(GEOJSON_URL);
-                const geoJson = await response.json();
-                echarts.registerMap('china_registered', geoJson);
-                initChart();
-                document.getElementById('loadingOverlay').style.display = 'none';
-            } catch (err) {
-                console.error(err);
-                document.getElementById('loadingOverlay').innerHTML = '地图数据加载失败';
-            }
-        }
-
-        loadMap();
+        init();
     })();
 </script>
 </body>
